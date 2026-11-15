@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>魔寵：幻境之旅 - 日系動漫奇幻冒險 RPG</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#1c1936">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+</head>
+<body>
+  <!-- 3D WebGL Canvas -->
+  <div id="canvas-container"></div>
+
+  <!-- Center Crosshair & Interaction Prompt -->
+  <div class="crosshair-center">
+    <div class="crosshair-dot"></div>
+    <div id="crosshair-prompt" class="crosshair-prompt">【E】進行互動</div>
+  </div>
+
+  <!-- Top HUD Header -->
+  <header class="hud-header">
+    <!-- Player Profile -->
+    <div class="hud-player-badge" id="btn-header-profile" title="點擊開啟時裝衣櫥">
+      <div class="player-avatar-ring">🧙‍♀️</div>
+      <div class="player-title-text">
+        <h2 id="hud-player-name">星月</h2>
+        <div class="badge-sub">
+          <span id="hud-player-level">Lv.1</span>
+          <span>•</span>
+          <span class="gold-coins">🪙 <span id="hud-player-coins">120</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Quest Tracker Pill -->
+    <div id="hud-quest-box" class="hud-quest-pill" title="點擊查看主線任務與自由探索">
+      <span class="quest-tag-icon">📜</span>
+      <span id="hud-quest-title" class="quest-summary-text">追查七顆幻境水晶的秘密</span>
+    </div>
+
+    <!-- Current Zone Indicator -->
+    <div id="hud-current-zone" class="hud-zone-pill" title="點擊查看世界地圖">
+      🏡 溫馨小家
+    </div>
+
+    <!-- Dynamic Weather Indicator -->
+    <div id="hud-weather-badge" class="hud-zone-pill weather-pill" style="cursor:pointer;" title="點擊即刻切換動態天氣">
+      ☀️ 晴朗艷陽
+    </div>
+
+    <!-- Follower Active Pet Card -->
+    <div id="hud-pet-card" class="hud-pet-card" title="點擊開啟魔寵親密度養成面板">
+      <div id="hud-pet-avatar" class="pet-avatar-icon">🦊</div>
+      <div class="pet-stats-vbox">
+        <div class="pet-top-row">
+          <span id="hud-pet-name">烈焰小火狐</span>
+          <span id="hud-pet-element" class="element-pill" style="background:#ef4444;">🔥 火</span>
+        </div>
+        <div class="stat-bar-track" title="魔寵生命值">
+          <div id="hud-pet-hp-bar" class="stat-bar-fill hp-fill" style="width:100%;"></div>
+        </div>
+        <div class="stat-bar-track" title="魔寵飽食度">
+          <div id="hud-pet-satiety-bar" class="stat-bar-fill sat-fill" style="width:85%;"></div>
+        </div>
+        <div class="pet-bottom-row">
+          <span id="hud-pet-level">Lv.1</span>
+          <span id="hud-pet-affection">💖 50/100</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Touch Virtual Joystick -->
+  <div class="mobile-stick-container">
+    <div id="mobile-stick-base" class="stick-base">
+      <div id="mobile-stick-thumb" class="stick-thumb"></div>
+    </div>
+  </div>
+
+  <!-- Bottom Quick Navigation Bar -->
+  <nav class="quick-nav-bar">
+    <button id="btn-nav-home" class="nav-btn highlight-nav" title="返回我的溫馨小家">
+      <span class="icon">🏡</span>
+      <span class="label">我的小家</span>
+    </button>
+    <button id="btn-nav-cooking" class="nav-btn" title="烹飪大鍋料理">
+      <span class="icon">🍲</span>
+      <span class="label">烹飪工坊</span>
+    </button>
+    <button id="btn-nav-furniture" class="nav-btn" title="溫馨家具商城">
+      <span class="icon">🛋️</span>
+      <span class="label">家具商城</span>
+    </button>
+    <button id="btn-nav-hatch" class="nav-btn" title="魔寵孵化室">
+      <span class="icon">🥚</span>
+      <span class="label">孵化室</span>
+    </button>
+    <button id="btn-nav-care" class="nav-btn" title="餵食與撫摸互動">
+      <span class="icon">🍎</span>
+      <span class="label">養成互動</span>
+    </button>
+    <button id="btn-nav-evolve" class="nav-btn" title="魔寵進化神殿">
+      <span class="icon">🧬</span>
+      <span class="label">進化神殿</span>
+    </button>
+    <button id="btn-nav-book" class="nav-btn" title="魔寵全圖鑑收集冊">
+      <span class="icon">📖</span>
+      <span class="label">收集圖鑑</span>
+    </button>
+    <button id="btn-nav-map" class="nav-btn" title="八大區域冒險傳送">
+      <span class="icon">🗺️</span>
+      <span class="label">世界地圖</span>
+    </button>
+    <button id="btn-nav-bag" class="nav-btn" title="冒險背包與素材">
+      <span class="icon">🎒</span>
+      <span class="label">冒險背包</span>
+    </button>
+    <button id="btn-nav-wardrobe" class="nav-btn highlight-nav" title="角色外觀時裝衣櫥">
+      <span class="icon">🪞</span>
+      <span class="label">時裝衣櫥</span>
+    </button>
+    <button id="btn-nav-secrets" class="nav-btn highlight-nav" title="五大隱藏秘密檔案館">
+      <span class="icon">🗝️</span>
+      <span class="label">秘密檔案</span>
+    </button>
+    <button id="btn-nav-switch-char" class="nav-btn" title="幻境選擇之門 (切換角色)">
+      <span class="icon">🚪</span>
+      <span class="label">幻境之門</span>
+    </button>
+    <button id="btn-nav-starter" class="nav-btn highlight-nav" title="初始魔寵契約儀式 (選擇初始夥伴/召喚新同伴)">
+      <span class="icon">🐾</span>
+      <span class="label">初始魔寵</span>
+    </button>
+    <button id="btn-toggle-sound" class="nav-btn" title="開關聲音與背景音樂">
+      <span class="icon">🔊</span>
+      <span class="label">音效</span>
+    </button>
+  </nav>
+
+  <!-- Toast Notification -->
+  <div id="game-toast" class="game-toast"></div>
+
+  <!-- ============================================== -->
+  <!-- 🚪 0. 幻境選擇之門 (Character Selection Gate) -->
+  <!-- ============================================== -->
+  <div id="modal-char-select" class="anime-modal">
+    <div class="modal-dialog" style="max-width:880px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="icon">🚪</span>
+          <h2>幻境選擇之門 - 選擇初始角色</h2>
+        </div>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="char-gate-intro">
+          歡迎踏入《魔寵：幻境之旅》！請選擇引導您踏入大世界的初始角色。<br>
+          每位角色擁有專屬特質、獨家初始技能，以及蘊藏古老秘密的專屬奇遇故事：
+        </p>
+        <div id="char-select-cards" class="char-cards-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- 📖 角色專屬序章奇遇 (Story Prologue Cutscene) -->
+  <!-- ============================================== -->
+  <div id="modal-story-cutscene" class="anime-modal story-modal-overlay">
+    <div class="modal-dialog cinematic-dialog" style="max-width:820px;">
+      <div id="story-cutscene-body" class="modal-body story-body-padded"></div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- 🐾 初始魔寵契約儀式 (Starter Pet Selection Modal) -->
+  <!-- ============================================== -->
+  <div id="modal-starter-pet-select" class="anime-modal">
+    <div class="modal-dialog" style="max-width:980px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="icon">🐾</span>
+          <h2>初始魔寵契約儀式 - 選擇你的第一位夥伴</h2>
+        </div>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="char-gate-intro">
+          在踏入未知大陸前，有六隻靈性初醒的魔寵正在等待著你的選擇！<br>
+          請選擇一隻作為你的最初同行夥伴。<strong>在未來的冒險中，所有認同你、與你締結契約的魔寵，都將無上限全員跟隨在身邊！</strong>
+        </p>
+        <div id="starter-pets-cards-grid" class="starter-pets-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- 👗 1:1 時裝衣櫥 (Wardrobe Modal - Image 4) -->
+  <!-- ============================================== -->
+  <div id="modal-wardrobe" class="anime-modal wardrobe-modal-overlay">
+    <div class="modal-dialog wardrobe-dialog" style="max-width:960px;">
+      <div class="modal-header wardrobe-header">
+        <div class="modal-title-group">
+          <span class="icon">🪞</span>
+          <h2>時裝衣櫥 - 角色外觀修改與染色</h2>
+        </div>
+        <div class="wardrobe-header-actions">
+          <span class="currency-tag">🪙 <span id="wardrobe-coins-display">99,953K</span></span>
+          <button class="modal-close-btn">&times;</button>
+        </div>
+      </div>
+      <div class="modal-body wardrobe-layout">
+        <!-- Left Category Sidebar (Image 4 exact icons: 服裝, 髮型, 髮色, 眼睛, 頭飾) -->
+        <div class="wardrobe-cat-sidebar">
+          <button class="wardrobe-cat-tab active" data-cat="outfits" title="更換服裝">
+            <span class="cat-icon">👕</span>
+            <span class="cat-label">服裝</span>
+          </button>
+          <button class="wardrobe-cat-tab" data-cat="hairStyles" title="更換髮型">
+            <span class="cat-icon">💇</span>
+            <span class="cat-label">髮型</span>
+          </button>
+          <button class="wardrobe-cat-tab" data-cat="hairColors" title="染髮顏色">
+            <span class="cat-icon">🎨</span>
+            <span class="cat-label">髮色</span>
+          </button>
+          <button class="wardrobe-cat-tab" data-cat="eyeColors" title="美瞳顏色">
+            <span class="cat-icon">👁️</span>
+            <span class="cat-label">眼睛</span>
+          </button>
+          <button class="wardrobe-cat-tab" data-cat="headwears" title="外型頭飾配件">
+            <span class="cat-icon">👒</span>
+            <span class="cat-label">頭飾</span>
+          </button>
+        </div>
+
+        <!-- Center Dressing Mirror Stage (Matches Image 4) -->
+        <div class="wardrobe-mirror-stage">
+          <div class="mirror-room-env">
+            <div class="mirror-wooden-frame" id="wardrobe-interactive-mirror" title="點擊鏡子：互動切換試穿姿勢與角色語音">
+              <img id="wardrobe-mirror-portrait" src="assets/character_xingyue.jpg" alt="角色鏡像" class="mirror-portrait-img">
+              <div class="mirror-sweep-shine"></div>
+              <div class="mirror-click-hint">✨ 點擊鏡子互動</div>
+            </div>
+            <div class="mirror-rug-carpet"></div>
+          </div>
+          <div id="wardrobe-char-speech" class="wardrobe-speech-card">星月：「在穿衣鏡前照了照，這套時裝真合身！」</div>
+          <!-- Name Input & Fixed Face Policy -->
+          <div class="wardrobe-name-box">
+            <div class="name-input-wrapper">
+              <label for="wardrobe-input-name">角色名字：</label>
+              <input type="text" id="wardrobe-input-name" class="wardrobe-name-input" maxlength="10" placeholder="請輸入名字">
+            </div>
+            <div class="fixed-face-note">🔒 臉部外觀為固定設計，不可修改</div>
+          </div>
+        </div>
+
+        <!-- Right Item Cards / Swatches Column -->
+        <div class="wardrobe-items-column">
+          <div class="items-column-header">
+            <h3>時裝庫與色盤</h3>
+            <span class="items-count-badge">可收集</span>
+          </div>
+          <div id="wardrobe-items-list" class="wardrobe-items-scroll"></div>
+
+          <!-- Bottom Action Buttons like Image 4 (還原, 保存/染色) -->
+          <div class="wardrobe-actions-bottom">
+            <button id="btn-wardrobe-reset" class="anime-btn btn-secondary">🔄 還原預設</button>
+            <button id="btn-wardrobe-save" class="anime-btn primary-glow">💾 保存裝備造型</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- 📜 主線任務與自由探索 (Quest Modal) -->
+  <!-- ============================================== -->
+  <div id="modal-quest" class="anime-modal">
+    <div class="modal-dialog" style="max-width:760px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="icon">📜</span>
+          <h2>主線劇情任務 & 自由探索指南</h2>
+        </div>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div id="quest-content-body" class="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- 🗝️ 五大隱藏秘密檔案館 (Secrets Modal) -->
+  <!-- ============================================== -->
+  <div id="modal-secrets" class="anime-modal">
+    <div class="modal-dialog" style="max-width:840px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="icon">🗝️</span>
+          <h2>五大隱藏秘密檔案館</h2>
+        </div>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="secrets-subtitle">
+          在幻境世界中自由探索神秘洞穴、未知森林、遺跡祭壇，達成特殊條件即可揭開背後真相：
+        </p>
+        <div id="secrets-grid-list" class="secrets-grid-layout"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- 🥚 1. 孵化室面板 (Hatchery Modal) -->
+  <!-- ============================================== -->
+  <!-- 🥚 1. 魔寵孵化室 (Hatchery Modal) -->
+  <!-- ============================================== -->
+  <div id="modal-hatch" class="anime-modal">
+    <div class="modal-dialog" style="max-width: 620px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="icon">🥚</span>
+          <h2>魔寵魔法孵化室</h2>
+        </div>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- 頂部魔法孵化台小格子與法陣槽位 -->
+        <div class="incubator-center-card">
+          <div class="incubator-slot-wrapper">
+            <div id="incubator-slot-box" class="incubator-slot-box" title="點擊下方背包中的魔寵蛋，放入此孵化巢位">
+              <div class="slot-corner top-left"></div>
+              <div class="slot-corner top-right"></div>
+              <div class="slot-corner bottom-left"></div>
+              <div class="slot-corner bottom-right"></div>
+              <div id="egg-display-avatar" class="incubating-egg glow-pulse">🥚</div>
+              <div class="incubator-rune-circle"></div>
+            </div>
+            <div id="incubator-egg-name" class="incubator-egg-badge">尚未放入魔寵蛋</div>
+          </div>
+
+          <div id="hatch-progress-wrapper" class="stat-bar-track" style="display:none; height:14px; margin: 12px 0 6px 0; border-radius:10px;">
+            <div id="hatch-progress-fill" class="stat-bar-fill exp-fill" style="width:0%; transition: width 0.15s ease;"></div>
+          </div>
+          <p id="incubator-status-text" class="status-tip-text">👇 請點選下方背包中的一枚魔寵蛋，直接放入上方孵化台巢位：</p>
+          <div class="incubator-actions" style="margin-top: 10px;">
+            <button id="btn-start-hatch" class="anime-btn primary-glow" style="width: 100%; font-size: 15px; padding: 12px;">✨ 開始注入溫暖魔法（破殼孵化）</button>
+          </div>
+
+          <!-- 孵化成功彈出結果框 -->
+          <div id="hatch-result-box" style="display:none; margin-top:14px;"></div>
+        </div>
+
+        <h3 class="section-title" style="margin-top: 20px;">📦 背包中的魔寵蛋（點擊任一枚放入上方孵化槽）</h3>
+        <div id="hatch-egg-list" class="hatch-egg-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- 🍎 2. 養成撫摸與餵食面板 (Care Modal) -->
+  <!-- ============================================== -->
+  <div id="modal-care" class="anime-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="icon">💖</span>
+          <h2>魔寵日常照護與親密度</h2>
+        </div>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="care-hero-card">
+          <div class="pet-hero-avatar-box">
+            <div id="care-pet-avatar" class="pet-hero-icon floating-bounce">🦊</div>
+            <button id="btn-pet-touch" class="anime-btn touch-btn" title="撫摸魔寵增加親密度與心情">
+              ✋ 溫柔撫摸
+            </button>
+          </div>
+          <div class="pet-hero-info">
+            <div class="pet-hero-name-row">
+              <h3 id="care-pet-name">烈焰小火狐</h3>
+              <span id="care-pet-badge" class="element-pill">🔥 火屬性</span>
+            </div>
+            <div class="pet-detail-bars">
+              <div class="bar-group">
+                <div class="bar-label"><span>❤️ 生命值 HP</span><span id="care-hp-val">120/120</span></div>
+                <div class="stat-bar-track"><div id="care-hp-bar" class="stat-bar-fill hp-fill" style="width:100%;"></div></div>
+              </div>
+              <div class="bar-group">
+                <div class="bar-label"><span>🍎 飽食度</span><span id="care-satiety-val">85/100</span></div>
+                <div class="stat-bar-track"><div id="care-satiety-bar" class="stat-bar-fill sat-fill" style="width:85%;"></div></div>
+              </div>
+              <div class="bar-group">
+                <div class="bar-label"><span>💖 親密度</span><span id="care-affection-val">50/100</span></div>
+                <div class="stat-bar-track"><div id="care-affection-bar" class="stat-bar-fill aff-fill" style="width:50%;"></div></div>
+              </div>
+              <div class="bar-group">
+                <div class="bar-label"><span>⭐ 經驗值 EXP</span><span id="care-exp-val">0/60</span></div>
+                <div class="stat-bar-track"><div id="care-exp-bar" class="stat-bar-fill exp-fill" style="width:0%;"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="section-title">🍓 餵食投餵美味點心</h3>
+        <div id="care-food-list" class="food-grid-list"></div>
+
+        <h3 class="section-title">🐾 切換同行出戰魔寵</h3>
+        <div id="care-roster-list" class="roster-grid-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- 🧬 3. 進化神殿面板 (Evolution Modal) -->
+  <!-- ============================================== -->
+  <div id="modal-evolve" class="anime-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="icon">🧬</span>
+          <h2>遠古魔寵進化神殿</h2>
+        </div>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div id="evolve-content" class="modal-body" style="text-align:center;">
+        <!-- Filled dynamically by ui.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- 📖 4. 魔寵全圖鑑手冊 (Bestiary Modal) -->
+  <!-- ============================================== -->
+  <div id="modal-book" class="anime-modal">
+    <div class="modal-dialog" style="max-width:780px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="icon">📖</span>
+          <h2>全魔寵生態收集手冊</h2>
+        </div>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="book-filters">
+          <button class="filter-btn active" data-filter="all">全部生態</button>
+          <button class="filter-btn" data-filter="fire">🔥 火焰系</button>
+          <button class="filter-btn" data-filter="ice">❄️ 冰霜系</button>
+          <button class="filter-btn" data-filter="nature">🌿 自然系</button>
+          <button class="filter-btn" data-filter="shadow">🔮 暗影系</button>
+        </div>
+        <div id="book-grid-list" class="book-grid-container"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- 🗺️ 5. 大世界傳送地圖 (World Map Modal) -->
+  <!-- ============================================== -->
+  <div id="modal-map" class="anime-modal">
+    <div class="modal-dialog" style="max-width:720px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="icon">🗺️</span>
+          <h2>幻境大陸世界傳送門</h2>
+        </div>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="map-zones-grid" class="map-zones-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- 🎒 6. 冒險背包面板 (Inventory Modal) -->
+  <!-- ============================================== -->
+  <div id="modal-bag" class="anime-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="icon">🎒</span>
+          <h2>冒險家背包</h2>
+        </div>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="inventory-grid" class="inventory-grid-box"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- ⚔️ 7. 奇幻回合制對戰介面 (Battle Arena Modal) -->
+  <!-- ============================================== -->
+  <div id="modal-battle" class="anime-modal">
+    <div class="modal-dialog" style="max-width:580px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="icon">⚔️</span>
+          <h2 id="battle-header-title">遭遇野外魔獸！</h2>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="battle-arena-stage">
+          <!-- Anime Ultimate Skill Cut-in Overlay -->
+          <div id="battle-cutin-overlay" class="battle-cutin-overlay" style="display:none;">
+            <div class="cutin-speed-lines"></div>
+            <div class="cutin-content">
+              <div id="cutin-char-avatar" class="cutin-avatar">🦊</div>
+              <div class="cutin-text-group">
+                <span class="cutin-tag">⚡ ULTIMATE SKILL 必殺絕招</span>
+                <h2 id="cutin-skill-name">星光熾熱爆轟！</h2>
+              </div>
+            </div>
+          </div>
+          <!-- Wild Monster Box -->
+          <div class="battle-side-card enemy-side">
+            <div class="battle-unit-avatar bounce-anim" id="battle-enemy-avatar">🐺</div>
+            <div class="battle-unit-vbox">
+              <div class="b-unit-title">
+                <span id="battle-enemy-name">野狼幼崽</span>
+                <span id="battle-enemy-element" class="element-pill">🔥 火</span>
+              </div>
+              <div class="stat-bar-track dual-hp-track">
+                <div id="battle-enemy-hp-ghost" class="stat-bar-fill hp-ghost-fill" style="width:100%;"></div>
+                <div id="battle-enemy-hp-bar" class="stat-bar-fill hp-fill" style="width:100%;"></div>
+              </div>
+              <div class="b-hp-label">HP: <span id="battle-enemy-hp-val">100/100</span></div>
+              <!-- Speech Bubble from Enemy -->
+              <div id="battle-enemy-speech" class="battle-speech-bubble enemy-bubble">「吼！不要靠近我！」</div>
+            </div>
+          </div>
+
+          <div class="battle-vs-badge">VS</div>
+
+          <!-- Player Pet Box -->
+          <div class="battle-side-card player-side">
+            <div class="battle-unit-avatar" id="battle-player-avatar">🦊</div>
+            <div class="battle-unit-vbox">
+              <div class="b-unit-title">
+                <span id="battle-player-name">烈焰小火狐</span>
+                <span id="battle-player-element" class="element-pill">🔥 火</span>
+              </div>
+              <div class="stat-bar-track dual-hp-track">
+                <div id="battle-player-hp-ghost" class="stat-bar-fill hp-ghost-fill" style="width:100%;"></div>
+                <div id="battle-player-hp-bar" class="stat-bar-fill hp-fill" style="width:100%;"></div>
+              </div>
+              <div class="b-hp-label">HP: <span id="battle-player-hp-val">120/120</span></div>
+              <!-- Speech Bubble from Player's Pet -->
+              <div id="battle-player-speech" class="battle-speech-bubble player-bubble">「主人小心！我感受到了它體內的混亂濁氣！」</div>
+            </div>
+          </div>
+
+          <!-- Heart Trust Bar for Taming / Talking -->
+          <div class="battle-trust-bar-box" id="battle-trust-box">
+            <span class="trust-label">💖 心靈親密度：</span>
+            <div class="stat-bar-track trust-track">
+              <div id="battle-trust-fill" class="stat-bar-fill aff-fill" style="width:0%;"></div>
+            </div>
+            <span id="battle-trust-val" class="trust-val">0%</span>
+            <span class="trust-tip">（達100%可感化收服讓牠跟我走！）</span>
+          </div>
+
+          <!-- Ticker Battle Log -->
+          <div id="battle-log-ticker" class="battle-log-ticker"></div>
+
+          <!-- Battle Action Buttons -->
+          <div class="battle-actions-grid">
+            <button id="btn-battle-talk" class="anime-btn primary-glow" style="background:linear-gradient(135deg, #a855f7 0%, #ec4899 100%);">💬 心靈對話 (讓牠說話/收服)</button>
+            <button id="btn-battle-skill" class="anime-btn success-glow">⚡ 專屬元素絕招</button>
+            <button id="btn-battle-atk" class="anime-btn">⚔️ 普通撞擊</button>
+            <button id="btn-battle-item" class="anime-btn">🍇 投餵漿果</button>
+            <button id="btn-battle-run" class="anime-btn" style="background:#64748b;">💨 戰略撤退</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- 🔍 8. 古代符文石碑解謎 (Rune Modal) -->
+  <!-- ============================================== -->
+  <div id="modal-rune" class="anime-modal">
+    <div class="modal-dialog" style="max-width:480px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="icon">🔍</span>
+          <h2>遠古元素符文石碑</h2>
+        </div>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div id="rune-puzzle-content" class="modal-body rune-puzzle-box"></div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- 🍲 9. 幻境烹飪工坊 (Cooking Modal) -->
+  <!-- ============================================== -->
+  <div id="modal-cooking" class="anime-modal">
+    <div class="modal-dialog" style="max-width:580px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="icon">🍲</span>
+          <h2>幻境烹飪大工坊</h2>
+        </div>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="color:#cbd5e1; font-size:13px; margin-bottom:12px; line-height:1.5;">
+          使用果園新鮮採摘的水果與釣起的珍稀靈魚，慢火熬製頂級料理大餐！餵給魔寵吃可大幅提升等級與親密度！
+        </p>
+        <div id="cooking-recipes-list" class="cooking-recipes-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- 🛋️ 10. 溫馨家具商城 (Furniture Modal) -->
+  <!-- ============================================== -->
+  <div id="modal-furniture" class="anime-modal">
+    <div class="modal-dialog" style="max-width:580px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="icon">🛋️</span>
+          <h2>溫馨家具工坊</h2>
+        </div>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <span style="color:#cbd5e1; font-size:13px;">為你的專屬溫馨小家添購高雅家具！</span>
+          <span style="font-weight:700; color:#facc15;">🪙 擁有金幣：<span id="furniture-coin-val">120</span></span>
+        </div>
+        <div id="furniture-items-list" class="furniture-items-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Main Script -->
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
